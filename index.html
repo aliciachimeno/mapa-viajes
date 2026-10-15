@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0E6B61">
+  <title>Mapa de viajes</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- MAPA -->
+  <section id="v-mapa" class="view">
+    <div id="map"></div>
+    <div class="map-top">
+      <label class="search">
+        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#56625D" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+        <input id="q" type="search" placeholder="Buscar lugar, ciudad o nota" aria-label="Buscar" autocomplete="off">
+      </label>
+      <div class="chips" id="map-chips">
+        <button class="chip on" data-f="all">Todos</button>
+        <button class="chip" data-f="visited"><span class="dot v"></span>Visitados</button>
+        <button class="chip" data-f="want"><span class="dot w"></span>Quiero ir</button>
+        <button class="chip" data-f="restaurante">Restaurantes</button>
+      </div>
+    </div>
+    <button id="locate" class="fab-sm" aria-label="Mi ubicación">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1B2421" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+    </button>
+    <a id="preview" class="preview" hidden></a>
+    <p id="map-hint" class="hint" hidden>Mantén pulsado el mapa o pulsa + para añadir un lugar</p>
+  </section>
+
+  <!-- LISTA -->
+  <section id="v-lugares" class="view page">
+    <h1>Mis lugares</h1>
+    <div class="seg" id="seg" role="tablist" aria-label="Estado"></div>
+    <div class="chips scroll" id="list-chips"></div>
+    <div id="list"></div>
+  </section>
+
+  <!-- FICHA -->
+  <section id="v-lugar" class="view"></section>
+
+  <!-- FORMULARIO -->
+  <section id="v-form" class="view">
+    <form id="form" novalidate>
+      <header class="form-h">
+        <button type="button" class="link" id="f-cancel">Cancelar</button>
+        <h1 id="form-title">Nuevo lugar</h1>
+        <button type="submit" class="btn primary" id="f-save" style="height:40px">Guardar</button>
+      </header>
+      <div class="form-b">
+        <div class="pick">
+          <div id="pickmap"></div>
+          <svg class="center-pin" aria-hidden="true" width="40" height="50" viewBox="0 0 40 50"><path d="M20 48C20 48 3 30 3 19a17 17 0 0 1 34 0c0 11-17 29-17 29z" fill="#1B2421" stroke="#fff" stroke-width="3"/><circle cx="20" cy="19" r="5" fill="#fff"/></svg>
+          <button type="button" class="btn" id="pick-locate">Mi ubicación</button>
+        </div>
+        <div class="inline">
+          <input id="addr" type="search" placeholder="Buscar dirección o sitio" aria-label="Buscar dirección" autocomplete="off">
+          <button type="button" class="btn dark" id="addr-go">Buscar</button>
+        </div>
+        <p class="muted" style="margin:-10px 0 0;font-size:13px">Mueve el mapa hasta que el pin quede sobre el sitio.</p>
+
+        <label class="field">Nombre
+          <input id="f-name" type="text" placeholder="Ej. Taberna do Bairro" required>
+        </label>
+
+        <fieldset>
+          <legend>Estado</legend>
+          <div class="two" id="f-status"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Tipo</legend>
+          <div class="chips" id="f-type"></div>
+        </fieldset>
+
+        <label class="field">Ciudad
+          <input id="f-city" type="text" placeholder="Se rellena sola si la dejas vacía">
+        </label>
+
+        <div class="two">
+          <fieldset>
+            <legend>Valoración</legend>
+            <div class="stars" id="f-stars"></div>
+          </fieldset>
+          <label class="field">Fecha
+            <input id="f-date" type="date">
+          </label>
+        </div>
+
+        <label class="field">Nota
+          <textarea id="f-note" rows="3" placeholder="Qué pedir, cuándo ir, con quién…"></textarea>
+        </label>
+
+        <label class="field">Etiquetas
+          <input id="f-tags" type="text" placeholder="marisco, terraza, repetir">
+        </label>
+
+        <fieldset>
+          <legend>Fotos</legend>
+          <div class="photos" id="f-photos"></div>
+        </fieldset>
+      </div>
+    </form>
+  </section>
+
+  <!-- FOTOS -->
+  <section id="v-fotos" class="view page">
+    <h1>Fotos</h1>
+    <div id="gallery" class="gallery"></div>
+  </section>
+
+  <!-- MÁS -->
+  <section id="v-mas" class="view page">
+    <h1>Copia de seguridad</h1>
+    <div class="card" id="mas-info"></div>
+    <div class="btns" style="margin-top:16px">
+      <button class="btn primary" id="export">Exportar copia</button>
+      <label class="btn">Importar copia<input type="file" id="import" accept="application/json,.json" hidden></label>
+    </div>
+    <p class="muted" style="font-size:14px;line-height:1.5;margin-top:20px">
+      Tus lugares y fotos se guardan solo en este móvil. Exporta una copia de vez en cuando
+      (guárdala en Drive, iCloud o envíatela) y podrás recuperarla en cualquier móvil con
+      «Importar copia».
+    </p>
+  </section>
+
+  <nav id="tabbar">
+    <a class="tab" data-v="mapa" href="#/mapa">
+      <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/></svg>Mapa</a>
+    <a class="tab" data-v="lugares" href="#/lugares">
+      <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Lugares</a>
+    <a class="tab-add" href="#/nuevo" aria-label="Añadir lugar"><span>
+      <svg aria-hidden="true" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span></a>
+    <a class="tab" data-v="fotos" href="#/fotos">
+      <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 8"/></svg>Fotos</a>
+    <a class="tab" data-v="mas" href="#/mas">
+      <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a4.5 4.5 0 0 1-.5-9A6 6 0 0 1 18 8a4 4 0 0 1-1 10z"/><path d="M12 11v6M9.5 14.5L12 17l2.5-2.5"/></svg>Copia</a>
+  </nav>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
